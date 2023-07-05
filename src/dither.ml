@@ -1,7 +1,30 @@
 open Core
 
 (* This should look familiar by now! *)
-let transform image = image
+let transform image =
+  let greyscale = Grayscale.transform image in
+  Image.foldi greyscale ~init:greyscale ~f:(fun ~x ~y current_image pixel ->
+    let max_val = Image.max_val image in
+    let current_value = Pixel.red pixel // max_val in
+    let new_value =
+      if Float.compare current_value 0.5 > 0 then max_val else 0
+    in
+    let error = Float.to_int current_value - new_value in
+    let seven = Float.to_int current_value + (error * 7 / 16) in
+    let three = Float.to_int current_value + (error * 3 / 16) in
+    let five = Float.to_int current_value + (error * 5 / 16) in
+    let one = Float.to_int current_value + (error * 1 / 16) in
+    Image.set current_image ~x ~y (new_value, new_value, new_value);
+    if x + 1 >= 0
+    then Image.set current_image ~x:(x + 1) ~y (seven, seven, seven);
+    if x - 1 >= 0 && y + 1 <= Image.height image
+    then Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three);
+    if y + 1 <= Image.height image
+    then Image.set current_image ~x ~y:(y + 1) (five, five, five);
+    if x + 1 <= Image.width image && y + 1 >= 0
+    then Image.set current_image ~x:(x + 1) ~y:(y + 1) (one, one, one);
+    current_image)
+;;
 
 let command =
   Command.basic
@@ -17,5 +40,6 @@ let command =
         let image = Image.load_ppm ~filename |> transform in
         Image.save_ppm
           image
-          ~filename:(String.chop_suffix_exn filename ~suffix:".ppm" ^ "_dither.ppm")]
+          ~filename:
+            (String.chop_suffix_exn filename ~suffix:".ppm" ^ "_dither.ppm")]
 ;;
