@@ -6,36 +6,60 @@ let transform image =
   Image.foldi greyscale ~init:greyscale ~f:(fun ~x ~y current_image pixel ->
     let max_val = Image.max_val image in
     let current_value = Pixel.red pixel // max_val in
-    let new_value =
-      if Float.compare current_value 0.5 > 0 then max_val else 0
+    let new_value = if Float.O.(current_value > 0.5) then 1.0 else 0.0 in
+    let error = current_value -. new_value in
+    if Float.O.(new_value <> 0.0)
+    then Image.set current_image ~x ~y (max_val, max_val, max_val)
+    else Image.set current_image ~x ~y (0, 0, 0);
+    let () =
+      match Image.get current_image ~x:(x + 1) ~y with
+      | exception _ -> ()
+      | _ ->
+        let current_pixel = Image.get current_image ~x:(x + 1) ~y in
+        let current_val = Pixel.red current_pixel in
+        let seven =
+          current_val
+          + Float.to_int (error *. (7 // 16) *. Int.to_float max_val)
+        in
+        Image.set current_image ~x:(x + 1) ~y (seven, seven, seven)
     in
-    let error = Float.to_int current_value - new_value in
-    let seven = Float.to_int current_value + (error * 7 / 16) in
-    let three = Float.to_int current_value + (error * 3 / 16) in
-    let five = Float.to_int current_value + (error * 5 / 16) in
-    let one = Float.to_int current_value + (error * 1 / 16) in
-    Image.set current_image ~x ~y (new_value, new_value, new_value);
-    match Image.set current_image ~x:(x + 1) ~y (seven, seven, seven) with
-    | exception _ -> current_image
-    | _ ->
-      ();
-      (match
-         Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three)
-       with
-       | exception _ -> current_image
-       | _ ->
-         ();
-         (match Image.set current_image ~x ~y:(y + 1) (five, five, five) with
-          | exception _ -> current_image
-          | _ ->
-            ();
-            (match
-               Image.set current_image ~x:(x + 1) ~y:(y + 1) (one, one, one)
-             with
-             | exception _ -> current_image
-             | _ ->
-               ();
-               current_image))))
+    let () =
+      match Image.get current_image ~x:(x - 1) ~y:(y + 1) with
+      | exception _ -> ()
+      | _ ->
+        let current_pixel = Image.get current_image ~x:(x - 1) ~y:(y + 1) in
+        let current_val = Pixel.red current_pixel in
+        let three =
+          current_val
+          + Float.to_int (error *. (3 // 16) *. Int.to_float max_val)
+        in
+        Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three)
+    in
+    let () =
+      match Image.get current_image ~x ~y:(y + 1) with
+      | exception _ -> ()
+      | _ ->
+        let current_pixel = Image.get current_image ~x ~y:(y + 1) in
+        let current_val = Pixel.red current_pixel in
+        let five =
+          current_val
+          + Float.to_int (error *. (5 // 16) *. Int.to_float max_val)
+        in
+        Image.set current_image ~x ~y:(y + 1) (five, five, five)
+    in
+    let () =
+      match Image.get current_image ~x:(x + 1) ~y:(y + 1) with
+      | exception _ -> ()
+      | _ ->
+        let current_pixel = Image.get current_image ~x:(x + 1) ~y:(y + 1) in
+        let current_val = Pixel.red current_pixel in
+        let one =
+          current_val
+          + Float.to_int (error *. (1 // 16) *. Int.to_float max_val)
+        in
+        Image.set current_image ~x:(x + 1) ~y:(y + 1) (one, one, one)
+    in
+    current_image)
 ;;
 
 let command =
