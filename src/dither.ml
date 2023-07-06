@@ -15,15 +15,27 @@ let transform image =
     let five = Float.to_int current_value + (error * 5 / 16) in
     let one = Float.to_int current_value + (error * 1 / 16) in
     Image.set current_image ~x ~y (new_value, new_value, new_value);
-    if x + 1 >= 0
-    then Image.set current_image ~x:(x + 1) ~y (seven, seven, seven);
-    if x - 1 >= 0 && y + 1 <= Image.height image
-    then Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three);
-    if y + 1 <= Image.height image
-    then Image.set current_image ~x ~y:(y + 1) (five, five, five);
-    if x + 1 <= Image.width image && y + 1 >= 0
-    then Image.set current_image ~x:(x + 1) ~y:(y + 1) (one, one, one);
-    current_image)
+    match Image.set current_image ~x:(x + 1) ~y (seven, seven, seven) with
+    | exception _ -> current_image
+    | _ ->
+      Image.set current_image ~x:(x + 1) ~y (seven, seven, seven);
+      (match
+         Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three)
+       with
+       | exception _ -> current_image
+       | _ ->
+         Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three);
+         (match Image.set current_image ~x ~y:(y + 1) (five, five, five) with
+          | exception _ -> current_image
+          | _ ->
+            Image.set current_image ~x ~y:(y + 1) (five, five, five);
+            (match
+               Image.set current_image ~x:(x + 1) ~y:(y + 1) (one, one, one)
+             with
+             | exception _ -> current_image
+             | _ ->
+               Image.set current_image ~x ~y:(y + 1) (five, five, five);
+               current_image))))
 ;;
 
 let command =
