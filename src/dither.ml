@@ -18,23 +18,23 @@ let transform image =
     match Image.set current_image ~x:(x + 1) ~y (seven, seven, seven) with
     | exception _ -> current_image
     | _ ->
-      Image.set current_image ~x:(x + 1) ~y (seven, seven, seven);
+      ();
       (match
          Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three)
        with
        | exception _ -> current_image
        | _ ->
-         Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three);
+         ();
          (match Image.set current_image ~x ~y:(y + 1) (five, five, five) with
           | exception _ -> current_image
           | _ ->
-            Image.set current_image ~x ~y:(y + 1) (five, five, five);
+            ();
             (match
                Image.set current_image ~x:(x + 1) ~y:(y + 1) (one, one, one)
              with
              | exception _ -> current_image
              | _ ->
-               Image.set current_image ~x ~y:(y + 1) (five, five, five);
+               ();
                current_image))))
 ;;
 
