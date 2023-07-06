@@ -8,5 +8,6 @@ let command =
     ; "blur", Blur.command
     ; "dither", Dither.command
     ; "hidden", Steganography.command
+    ; "invert", Solarize.command
     ]
 ;;

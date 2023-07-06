@@ -1,6 +1,25 @@
 open Core
 
 (* This should look familiar by now! *)
+
+let apply_error
+  ~image
+  ~(error : float)
+  ~(x : int)
+  ~(y : int)
+  ~(max_val : int)
+  ~(error_coef : int)
+  =
+  match Image.get image ~x ~y with
+  | exception _ -> ()
+  | _ ->
+    let current_pixel = Image.get image ~x ~y in
+    let current_val = Pixel.red current_pixel in
+    let added_error = error *. (error_coef // 16 *. Int.to_float max_val) in
+    let new_value = current_val + Float.to_int added_error in
+    Image.set image ~x ~y (new_value, new_value, new_value)
+;;
+
 let transform image =
   let greyscale = Grayscale.transform image in
   Image.foldi greyscale ~init:greyscale ~f:(fun ~x ~y current_image pixel ->
@@ -11,54 +30,34 @@ let transform image =
     if Float.O.(new_value <> 0.0)
     then Image.set current_image ~x ~y (max_val, max_val, max_val)
     else Image.set current_image ~x ~y (0, 0, 0);
-    let () =
-      match Image.get current_image ~x:(x + 1) ~y with
-      | exception _ -> ()
-      | _ ->
-        let current_pixel = Image.get current_image ~x:(x + 1) ~y in
-        let current_val = Pixel.red current_pixel in
-        let seven =
-          current_val
-          + Float.to_int (error *. (7 // 16) *. Int.to_float max_val)
-        in
-        Image.set current_image ~x:(x + 1) ~y (seven, seven, seven)
-    in
-    let () =
-      match Image.get current_image ~x:(x - 1) ~y:(y + 1) with
-      | exception _ -> ()
-      | _ ->
-        let current_pixel = Image.get current_image ~x:(x - 1) ~y:(y + 1) in
-        let current_val = Pixel.red current_pixel in
-        let three =
-          current_val
-          + Float.to_int (error *. (3 // 16) *. Int.to_float max_val)
-        in
-        Image.set current_image ~x:(x - 1) ~y:(y + 1) (three, three, three)
-    in
-    let () =
-      match Image.get current_image ~x ~y:(y + 1) with
-      | exception _ -> ()
-      | _ ->
-        let current_pixel = Image.get current_image ~x ~y:(y + 1) in
-        let current_val = Pixel.red current_pixel in
-        let five =
-          current_val
-          + Float.to_int (error *. (5 // 16) *. Int.to_float max_val)
-        in
-        Image.set current_image ~x ~y:(y + 1) (five, five, five)
-    in
-    let () =
-      match Image.get current_image ~x:(x + 1) ~y:(y + 1) with
-      | exception _ -> ()
-      | _ ->
-        let current_pixel = Image.get current_image ~x:(x + 1) ~y:(y + 1) in
-        let current_val = Pixel.red current_pixel in
-        let one =
-          current_val
-          + Float.to_int (error *. (1 // 16) *. Int.to_float max_val)
-        in
-        Image.set current_image ~x:(x + 1) ~y:(y + 1) (one, one, one)
-    in
+    apply_error (* distrbutes 7/16 of the error to the east pixel *)
+      ~image:current_image
+      ~x:(x + 1)
+      ~y
+      ~error
+      ~max_val
+      ~error_coef:7;
+    apply_error (* distrbutes 3/16 of the error to the southwest pixel *)
+      ~image:current_image
+      ~x:(x - 1)
+      ~y:(y + 1)
+      ~error
+      ~max_val
+      ~error_coef:3;
+    apply_error (* distrbutes 5/16 of the error to the south pixel *)
+      ~image:current_image
+      ~x
+      ~y:(y + 1)
+      ~error
+      ~max_val
+      ~error_coef:5;
+    apply_error (* distrbutes 1/16 of the error to the southeast pixel *)
+      ~image:current_image
+      ~x:(x + 1)
+      ~y:(y + 1)
+      ~error
+      ~max_val
+      ~error_coef:1;
     current_image)
 ;;
 
