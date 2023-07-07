@@ -1,4 +1,4 @@
 open! Core
 
-val transform : Image.t -> threshold:int -> Image.t
+val transform : Image.t -> threshold:float -> Image.t
 val command : Command.t
